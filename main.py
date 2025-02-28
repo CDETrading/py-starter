@@ -20,15 +20,16 @@ async def start_process(command):
     print(f"Starting process: {command}")
     return await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
 
-async def monitor_process(command):
+async def monitor_process(config):
     """Monitor the process asynchronously and restart if it dies."""
+    command = config["command"]
     process = await start_process(command)
     
     while True:
         try:
             exit_code = await process.wait()
             print(f"Process exited with code {exit_code}. Restarting...")
-            await asyncio.sleep(2)  # Non-blocking sleep
+            await asyncio.sleep(config["interval"])  # Non-blocking sleep
             process = await start_process(command)
         except asyncio.CancelledError:
             print("Stopping monitoring...")
@@ -44,8 +45,7 @@ async def main(process_name):
         print("Invalid config file. It must contain a 'command' field.")
         return
     
-    command = config["command"]
-    await monitor_process(command)
+    await monitor_process(config)
 
 if __name__ == "__main__":
     process_name = sys.argv[1]
