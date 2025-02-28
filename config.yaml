@@ -1,7 +1,6 @@
-'mexc-arbitrage':
-    command: 'ls'
+'mexc-derrick-arb':
+    command: 'cd /home/ubuntu/trade-system-v2 && ./target/release/trade-system-v2 mexc_spot_triarb'
     interval: 10
-'binance-arbitrage':
-    command: 'python binance_arbitrage.py'
+'kucoin-cde-arb':
+    command: 'cd /home/ubuntu/trade-system-v2 && ./target/release/trade-system-v2 kucoin_spot_triarb'
     interval: 10
-
