@@ -1,0 +1,7 @@
+'mexc-arbitrage':
+    command: 'ls'
+    interval: 10
+'binance-arbitrage':
+    command: 'python binance_arbitrage.py'
+    interval: 10
+
