@@ -1,10 +1,24 @@
-import subprocess
-import time
 import os
 import yaml
 import sys
 import asyncio
+import logging
+from datetime import datetime
+import logging.handlers
+
 CONFIG_PATH = "config.yaml"
+
+log_filename = f"logs/py-start-{datetime.now().strftime('%Y-%m-%d')}.log"
+os.makedirs("logs", exist_ok=True)  # Ensure logs directory exists
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',  # Include timestamp in logs
+    handlers=[
+        logging.handlers.RotatingFileHandler(log_filename, maxBytes=100000, backupCount=20),
+        logging.StreamHandler(sys.stdout)  # Optional: also log to stdout
+    ]
+)
 
 def load_configs():
     """Load configuration from a JSON file."""
@@ -24,30 +38,37 @@ async def monitor_process(config):
     """Monitor the process asynchronously and restart if it dies."""
     command = config["command"]
     process = await start_process(command)
-    
+    logging.info(f"Starting process: {command}")
+
     while True:
         try:
             exit_code = await process.wait()
-            print(f"Process exited with code {exit_code}. Restarting...")
+            logging.info(f"Process exited with code {exit_code}. Restarting...")
             await asyncio.sleep(config["interval"])  # Non-blocking sleep
             process = await start_process(command)
         except asyncio.CancelledError:
-            print("Stopping monitoring...")
+            logging.info("Stopping monitoring...")
             process.terminate()
             await process.wait()
             break
+        except KeyboardInterrupt:
+            print("Keyboard interrupt. Stopping monitoring...")
+            logging.info("Keyboard interrupt. Stopping monitoring...")
+            process.terminate()
+            await process.wait()
+            sys.exit()
 
 async def main(process_name):
     configs = load_configs()
-    print(configs)
+    logging.info(configs)
     config = configs.get(process_name)
     if not config or "command" not in config:
-        print("Invalid config file. It must contain a 'command' field.")
+        logging.error("Invalid config file. It must contain a 'command' field.")
         return
     
     await monitor_process(config)
 
 if __name__ == "__main__":
     process_name = sys.argv[1]
-    print(process_name)
+    logging.info(process_name)
     asyncio.run(main(process_name))
